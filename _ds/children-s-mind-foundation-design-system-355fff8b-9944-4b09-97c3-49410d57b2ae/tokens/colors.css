@@ -1,0 +1,39 @@
+/* ============================================
+   CMF — COLOR TOKENS
+   Source: brand palette + files (2)/styles.css
+   ============================================ */
+:root{
+  /* --- Base palette --- */
+  --sky:         #41A8F5;   /* primary brand blue */
+  --sky-deep:    #1E8FE0;   /* hover/pressed blue */
+  --sky-tint:    #EAF6FF;   /* section wash */
+  --lime:        #92D14F;   /* secondary green */
+  --lime-bright: #B9DB3F;   /* hashtag banner / callout green */
+  --lime-tint:   #F3FAE6;
+  --sunset:      #E97132;   /* CTA / donate accent */
+  --sunset-deep: #CC5A1F;   /* CTA hover */
+  --sunset-tint: #FFF1E7;
+  --ink:         #16324A;   /* deep navy — body text */
+  --ink-soft:    #3E5C73;   /* secondary text on light */
+  --cream:       #FFFDF8;   /* warm off-white background */
+  --white:       #FFFFFF;
+  --line:        #D8ECFB;   /* hairline border on light blue-tinted surfaces */
+
+  /* --- Semantic aliases --- */
+  --color-bg:            var(--white);
+  --color-bg-cream:      var(--cream);
+  --color-bg-tint:       var(--sky-tint);
+  --color-text:          var(--ink);
+  --color-text-soft:     var(--ink-soft);
+  --color-text-on-color: var(--white);
+
+  --color-primary:       var(--sky);
+  --color-primary-hover: var(--sky-deep);
+  --color-secondary:     var(--lime);
+  --color-secondary-alt: var(--lime-bright);
+  --color-accent:        var(--sunset);       /* CTAs: Donate, Contact */
+  --color-accent-hover:  var(--sunset-deep);
+
+  --color-border:        var(--line);
+  --color-focus-ring:    var(--sunset);
+}

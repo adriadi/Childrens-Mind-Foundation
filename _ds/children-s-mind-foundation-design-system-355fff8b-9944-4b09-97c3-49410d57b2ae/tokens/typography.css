@@ -1,0 +1,37 @@
+/* ============================================
+   CMF — TYPE TOKENS
+   Display: Baloo 2 (rounded, playful, headlines)
+   Body: Inter (clean, legible, UI + paragraphs)
+   Loaded from Google Fonts CDN — no local font files
+   were supplied in source materials (see readme).
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --font-display: 'Baloo 2', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+
+  /* Display scale (Baloo 2) */
+  --text-display-xl: clamp(2.6rem, 6vw, 4.6rem);   /* hero headline */
+  --text-display-lg: clamp(2rem, 3.6vw, 2.8rem);    /* section h2 */
+  --text-display-md: 1.5rem;                        /* card h3 */
+  --text-display-sm: 1.25rem;
+
+  /* Body scale (Inter) */
+  --text-lede: 1.15rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.95rem;
+  --text-caption: 0.82rem;
+  --text-eyebrow: 0.8rem;
+
+  --leading-tight: 1.1;
+  --leading-normal: 1.6;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-display-bold: 800;
+
+  --tracking-eyebrow: 0.04em;
+}

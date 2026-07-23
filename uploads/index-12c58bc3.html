@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="author" content="Best Web Studio Ltd">
+<!-- Author: Best Web Studio Ltd -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Preview Book</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --arrow-bg: rgba(20,24,30,0.38);
+    --arrow-bg-hover: rgba(20,24,30,0.58);
+    --ui-color: #ffffff;
+    --shadow: 0 30px 60px -20px rgba(15,20,30,0.35), 0 10px 25px -10px rgba(15,20,30,0.25);
+  }
+
+  html, body{
+    margin:0;
+    padding:0;
+    background: transparent !important;
+    height:100%;
+    overflow:hidden;
+  }
+
+  *{
+    box-sizing:border-box;
+    -webkit-user-drag:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    user-select:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+  }
+
+  #stage{
+    position:relative;
+    width:100%;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:transparent;
+    padding: 40px 70px;
+  }
+
+  #book{
+    filter: drop-shadow(0 25px 45px rgba(10,15,25,0.30));
+  }
+
+  .page{
+    background:#ffffff;
+    overflow:hidden;
+  }
+
+  .page-inner{
+    width:100%;
+    height:100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events:none;
+  }
+
+  .page.--left .page-shadow{
+    box-shadow: inset -10px 0 20px -15px rgba(0,0,0,0.35);
+  }
+  .page.--right .page-shadow{
+    box-shadow: inset 10px 0 20px -15px rgba(0,0,0,0.35);
+  }
+
+  /* Navigation arrows */
+  .nav-arrow{
+    position:absolute;
+    top:50%;
+    transform: translateY(-50%);
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background: var(--arrow-bg);
+    border: none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+    z-index:20;
+    opacity: 0.85;
+  }
+  .nav-arrow:hover{
+    background: var(--arrow-bg-hover);
+    opacity:1;
+  }
+  .nav-arrow:active{
+    transform: translateY(-50%) scale(0.92);
+  }
+  .nav-arrow svg{
+    width:18px;
+    height:18px;
+    fill:none;
+    stroke: var(--ui-color);
+    stroke-width:2.4;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .nav-arrow.--prev{ left:12px; }
+  .nav-arrow.--next{ right:12px; }
+  .nav-arrow[disabled]{
+    opacity:0.25;
+    cursor:default;
+    pointer-events:none;
+  }
+
+  /* Page counter */
+  #counter{
+    position:absolute;
+    left:50%;
+    bottom:16px;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: var(--arrow-bg);
+    color: var(--ui-color);
+    font-size:12px;
+    letter-spacing:0.04em;
+    font-variant-numeric: tabular-nums;
+    z-index:20;
+    user-select:none;
+    pointer-events:none;
+  }
+
+  /* Hint */
+  #hint{
+    position:absolute;
+    left:50%;
+    top:18px;
+    transform: translateX(-50%);
+    padding:6px 14px;
+    border-radius:999px;
+    background: var(--arrow-bg);
+    color: var(--ui-color);
+    font-size:11.5px;
+    letter-spacing:0.03em;
+    z-index:20;
+    opacity:0.9;
+    transition: opacity 0.6s ease;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  #hint.--hidden{ opacity:0; }
+
+  @media (max-width: 640px){
+    #stage{ padding: 16px 44px; }
+    .nav-arrow{ width:38px; height:38px; }
+    .nav-arrow.--prev{ left:4px; }
+    .nav-arrow.--next{ right:4px; }
+    #hint{ font-size:10.5px; padding:5px 11px; top:10px;}
+    #counter{ font-size:11px; bottom:10px; }
+  }
+
+  /* ---------- coloring layer ---------- */
+  .page-inner{ position:relative; }
+  .color-canvas{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    touch-action:none;
+    pointer-events:auto;
+  }
+
+  /* ---------- toolbar ---------- */
+  #toolbar{
+    position:absolute;
+    left:50%;
+    top:18px;
+    transform: translateX(-50%);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    background: rgba(20,24,30,0.55);
+    backdrop-filter: blur(6px);
+    z-index:30;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  #toolbar .tbtn{
+    padding:7px 11px;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+    font-size:12.5px;
+    font-weight:600;
+    background: rgba(255,255,255,0.14);
+    color:#fff;
+    white-space:nowrap;
+  }
+  #toolbar .tbtn.active{ background:#5AC8FA; color:#12202b; }
+  #toolbar .swatch{
+    width:22px;height:22px;border-radius:50%;
+    border:2px solid rgba(255,255,255,0.8);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  #toolbar .swatch.active{ outline:2px solid #fff; outline-offset:2px; }
+  #toolbar input[type=color]{
+    width:24px;height:24px;border:none;border-radius:50%;cursor:pointer;padding:0;background:none;
+  }
+  #toolbar .sep{ width:1px; height:20px; background:rgba(255,255,255,0.25); margin:0 2px; }
+  @media (max-width: 640px){
+    #toolbar{ top:auto; bottom:44px; max-width:94vw; overflow-x:auto; padding:6px 10px; gap:6px; }
+    #toolbar .tbtn{ padding:6px 9px; font-size:11px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="toolbar">
+    <button class="tbtn active" id="modePencil">✏️ Pencil</button>
+    <button class="tbtn" id="modeBrush">🖌️ Brush</button>
+    <div class="sep"></div>
+    <div class="swatch active" data-color="#FF6F59" style="background:#FF6F59"></div>
+    <div class="swatch" data-color="#FFC93C" style="background:#FFC93C"></div>
+    <div class="swatch" data-color="#FFD3E0" style="background:#FFD3E0"></div>
+    <div class="swatch" data-color="#5AC8FA" style="background:#5AC8FA"></div>
+    <div class="swatch" data-color="#6FCF97" style="background:#6FCF97"></div>
+    <div class="swatch" data-color="#9B72CF" style="background:#9B72CF"></div>
+    <div class="swatch" data-color="#8B5E3C" style="background:#8B5E3C"></div>
+    <div class="swatch" data-color="#FF8CC6" style="background:#FF8CC6"></div>
+    <input type="color" id="customColor" value="#FF6F59">
+    <div class="sep"></div>
+    <button class="tbtn" id="undoBtn">↩️ Undo</button>
+  </div>
+
+  <button class="nav-arrow --prev" id="btnPrev" aria-label="Previous page">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+
+  <div id="book"></div>
+
+  <button class="nav-arrow --next" id="btnNext" aria-label="Next page">
+    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
+
+  <div id="hint">Use the arrows to turn the page</div>
+  <div id="counter">1 / 28</div>
+</div>
+
+<script src="page-flip.browser.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------------------------------------------------
+     Basic copy-protection deterrents.
+     Note: no client-side measure can make images fully
+     un-copyable (screenshots always work) — this only raises
+     the bar for casual right-click / drag / devtools saving.
+  --------------------------------------------------------- */
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); }, false);
+  document.addEventListener('dragstart', function(e){ e.preventDefault(); }, false);
+  document.addEventListener('selectstart', function(e){ e.preventDefault(); }, false);
+  document.addEventListener('keydown', function(e){
+    var k = e.key ? e.key.toLowerCase() : '';
+    if (k === 'f12') { e.preventDefault(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'i' || k === 'j' || k === 'c')) { e.preventDefault(); return; }
+    if ((e.ctrlKey || e.metaKey) && (k === 'u' || k === 's')) { e.preventDefault(); return; }
+  }, false);
+
+  /* ---------------------------------------------------------
+     Build page list.
+     Pages 1 and 30 (front / back cover) are marked hard.
+  --------------------------------------------------------- */
+  var PAGE_MARGIN = 22;  // keep strokes inside this frame
+
+  // Draws a black frame marking the paintable area, matching the printed
+  // border already visible on some pages - open on the spine side (no line
+  // there, just like a real book's inner margin), rounded on the two outer
+  // corners.
+  function drawPaintFrame(ctx, w, h, isLeftPage){
+    var r = 20, lw = 7;
+    var T = PAGE_MARGIN, B = PAGE_MARGIN;
+    var outer = PAGE_MARGIN, spine = 0;
+    var L = isLeftPage ? outer : spine;
+    var R = isLeftPage ? spine : outer;
+    ctx.save();
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = lw;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (isLeftPage) {
+      ctx.moveTo(w-R, T);
+      ctx.lineTo(L+r, T);
+      ctx.arcTo(L, T, L, T+r, r);
+      ctx.lineTo(L, h-B-r);
+      ctx.arcTo(L, h-B, L+r, h-B, r);
+      ctx.lineTo(w-R, h-B);
+    } else {
+      ctx.moveTo(L, T);
+      ctx.lineTo(w-R-r, T);
+      ctx.arcTo(w-R, T, w-R, T+r, r);
+      ctx.lineTo(w-R, h-B-r);
+      ctx.arcTo(w-R, h-B, w-R-r, h-B, r);
+      ctx.lineTo(L, h-B);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  var TOTAL_PAGES = 28;
+  var FIRST_CONTENT_PAGE = 3;   // 1 = front cover, 2 = inside-front cover
+  var LAST_CONTENT_PAGE = 26;   // 27 = inside-back cover, 28 = back cover
+  var bookEl = document.getElementById('book');
+  var canvasByPage = {}; // pageNum -> {canvas, ctx, history, img}
+
+  for (var i = 1; i <= TOTAL_PAGES; i++) {
+    var num = ('0' + i).slice(-2);
+    var isCover = (i === 1 || i === TOTAL_PAGES);
+
+    var pageDiv = document.createElement('div');
+    pageDiv.className = 'page';
+    if (isCover) pageDiv.setAttribute('data-density', 'hard');
+
+    var inner = document.createElement('div');
+    inner.className = 'page-inner';
+
+    var isColorable = (i >= FIRST_CONTENT_PAGE && i <= LAST_CONTENT_PAGE);
+
+    inner.style.backgroundImage = "url('pages/page-" + num + ".jpg')";
+    inner.style.backgroundSize = 'cover';
+    inner.style.backgroundPosition = 'center';
+    inner.style.backgroundRepeat = 'no-repeat';
+
+    if (isColorable) {
+      (function(pageNum){
+        var canvas = document.createElement('canvas');
+        canvas.className = 'color-canvas';
+        canvas.width = 986; canvas.height = 1400;
+        inner.appendChild(canvas);
+        var ctx = canvas.getContext('2d', {willReadFrequently:true});
+        if (pageNum !== 3 && pageNum !== 26) {
+          drawPaintFrame(ctx, canvas.width, canvas.height, pageNum % 2 === 0);
+        }
+        // baseline (frame only, no strokes) - never has an external image
+        // drawn into it, so it's never tainted and getImageData/putImageData
+        // always work, even when this file is opened directly (file://).
+        var entry = {canvas:canvas, ctx:ctx, history:[ctx.getImageData(0,0,canvas.width,canvas.height)], loaded:true};
+        canvasByPage[pageNum] = entry;
+        attachDrawing(entry, pageNum);
+      })(i);
+    }
+
+
+    pageDiv.appendChild(inner);
+    bookEl.appendChild(pageDiv);
+  }
+
+  /* ---------------------------------------------------------
+     Sizing: page images are 986 x 1400 px (ratio ~0.7043)
+  --------------------------------------------------------- */
+  function computeSize() {
+    var padX = window.innerWidth <= 640 ? 88 : 200;
+    var padY = window.innerWidth <= 640 ? 60 : 120;
+    var availW = window.innerWidth - padX;
+    var availH = window.innerHeight - padY;
+
+    var ratio = 986 / 1400;
+    var singleW = Math.min(availW / 2, availH * ratio);
+    var singleH = singleW / ratio;
+
+    singleW = Math.max(180, Math.min(singleW, 560));
+    singleH = singleW / ratio;
+
+    return { w: Math.round(singleW), h: Math.round(singleH) };
+  }
+
+  var size = computeSize();
+
+  /* ---------------------------------------------------------
+     Coloring: pencil + brush, clipped to the artwork frame.
+     Each page has its own canvas, so a stroke that crosses the
+     book's spine has to hand off from one canvas to the other -
+     handled globally (at document level) so it feels seamless.
+  --------------------------------------------------------- */
+  var mode = 'pencil';
+  var currentColor = '#FF6F59';
+  var lastActivePage = null;
+  var activePage = null; // pageNum currently being drawn on, or null
+
+  function attachDrawing(entry, pageNum){
+    var canvas = entry.canvas, ctx = entry.ctx;
+    var preStrokeSnapshot = null, scratch = null, scratchCtx = null;
+
+    function getPos(clientX, clientY){
+      var rect = canvas.getBoundingClientRect();
+      var scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+      return [Math.floor((clientX-rect.left)*scaleX), Math.floor((clientY-rect.top)*scaleY)];
+    }
+    function isInside(clientX, clientY){
+      var rect = canvas.getBoundingClientRect();
+      return clientX>=rect.left && clientX<=rect.right && clientY>=rect.top && clientY<=rect.bottom;
+    }
+    function composite(){
+      var w=canvas.width, h=canvas.height;
+      ctx.putImageData(preStrokeSnapshot,0,0);
+      ctx.save();
+      ctx.beginPath();
+      // Even page numbers sit on the LEFT of a spread, odd on the RIGHT
+      // (fixed by this book's pagination: 1 alone, then (2,3)(4,5)...(26,27), 28 alone).
+      // Skip the inset on whichever side faces the spine, so there's no
+      // dead unpaintable strip right where the two pages meet.
+      var isLeftPage = (pageNum % 2 === 0);
+      var leftInset  = isLeftPage ? PAGE_MARGIN : 0;
+      var rightInset = isLeftPage ? 0 : PAGE_MARGIN;
+      ctx.rect(leftInset, PAGE_MARGIN, w-leftInset-rightInset, h-2*PAGE_MARGIN);
+      ctx.clip();
+      ctx.globalAlpha = 0.55;
+      ctx.drawImage(scratch,0,0);
+      ctx.restore();
+    }
+    function beginStroke(clientX, clientY){
+      if(!entry.loaded) return;
+      lastActivePage = pageNum;
+      activePage = pageNum;
+      var p = getPos(clientX, clientY), x=p[0], y=p[1];
+      var w=canvas.width, h=canvas.height;
+      preStrokeSnapshot = ctx.getImageData(0,0,w,h);
+      scratch = document.createElement('canvas');
+      scratch.width=w; scratch.height=h;
+      scratchCtx = scratch.getContext('2d');
+      scratchCtx.strokeStyle=currentColor; scratchCtx.fillStyle=currentColor;
+      var lw = mode==='pencil' ? 9 : 32;
+      scratchCtx.lineWidth=lw; scratchCtx.lineJoin='round'; scratchCtx.lineCap='round';
+      scratchCtx.beginPath(); scratchCtx.arc(x,y,lw/2,0,Math.PI*2); scratchCtx.fill();
+      scratchCtx.beginPath(); scratchCtx.moveTo(x,y);
+      composite();
+    }
+    function continueStroke(clientX, clientY){
+      var p = getPos(clientX, clientY);
+      scratchCtx.lineTo(p[0],p[1]); scratchCtx.stroke();
+      scratchCtx.beginPath(); scratchCtx.moveTo(p[0],p[1]);
+      composite();
+    }
+    function endStroke(){
+      entry.history.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+      if(entry.history.length>12) entry.history.shift();
+      scratch=null; scratchCtx=null; preStrokeSnapshot=null;
+    }
+    entry.beginStroke = beginStroke;
+    entry.continueStroke = continueStroke;
+    entry.endStroke = endStroke;
+    entry.isInside = isInside;
+    entry.getPos = getPos;
+
+    canvas.addEventListener('mousedown', function(e){ e.stopPropagation(); beginStroke(e.clientX, e.clientY); });
+    canvas.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); var t=e.touches[0]; beginStroke(t.clientX, t.clientY); }, {passive:false});
+    canvas.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    entry.undo = function(){
+      if(entry.history.length>1){
+        entry.history.pop();
+        ctx.putImageData(entry.history[entry.history.length-1],0,0);
+      }
+    };
+  }
+
+  // Global handoff: once a stroke is active, follow the pointer across
+  // pages so drawing continues smoothly across the book's spine.
+  function handleGlobalMove(clientX, clientY){
+    if(activePage===null) return;
+    var current = canvasByPage[activePage];
+    if(current && current.isInside(clientX, clientY)){
+      current.continueStroke(clientX, clientY);
+      return;
+    }
+    // pointer moved onto a different page (or off it) - hand off the stroke
+    for (var pn in canvasByPage) {
+      var entry = canvasByPage[pn];
+      if (entry.isInside(clientX, clientY)) {
+        if (current) current.endStroke();
+        activePage = Number(pn);
+        entry.beginStroke(clientX, clientY);
+        return;
+      }
+    }
+    // pointer is over neither page (in the gutter/margin) - just pause;
+    // resumes automatically once it re-enters a page canvas
+  }
+  function handleGlobalUp(){
+    if(activePage===null) return;
+    var current = canvasByPage[activePage];
+    if(current) current.endStroke();
+    activePage = null;
+  }
+  document.addEventListener('mousemove', function(e){ handleGlobalMove(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', handleGlobalUp);
+  document.addEventListener('touchmove', function(e){
+    if(activePage===null) return;
+    e.preventDefault();
+    var t = e.touches[0];
+    handleGlobalMove(t.clientX, t.clientY);
+  }, {passive:false});
+  document.addEventListener('touchend', handleGlobalUp);
+
+  var modePencilBtn = document.getElementById('modePencil');
+  var modeBrushBtn = document.getElementById('modeBrush');
+  modePencilBtn.addEventListener('click', function(){
+    mode='pencil'; modePencilBtn.classList.add('active'); modeBrushBtn.classList.remove('active');
+  });
+  modeBrushBtn.addEventListener('click', function(){
+    mode='brush'; modeBrushBtn.classList.add('active'); modePencilBtn.classList.remove('active');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#toolbar .swatch'), function(s){
+    s.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('#toolbar .swatch'), function(x){ x.classList.remove('active'); });
+      s.classList.add('active');
+      currentColor = s.dataset.color;
+    });
+  });
+  document.getElementById('customColor').addEventListener('input', function(e){
+    currentColor = e.target.value;
+    Array.prototype.forEach.call(document.querySelectorAll('#toolbar .swatch'), function(x){ x.classList.remove('active'); });
+  });
+  document.getElementById('undoBtn').addEventListener('click', function(){
+    var p = lastActivePage || (pageFlip.getCurrentPageIndex()+1);
+    if(canvasByPage[p]) canvasByPage[p].undo();
+  });
+  // keep toolbar clicks/drags from ever reaching the book's drag-to-turn logic
+  document.getElementById('toolbar').addEventListener('mousedown', function(e){ e.stopPropagation(); });
+  document.getElementById('toolbar').addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
+
+
+  var pageFlip = new St.PageFlip(bookEl, {
+    width: size.w,
+    height: size.h,
+    size: 'stretch',
+    minWidth: 180,
+    maxWidth: 560,
+    minHeight: 250,
+    maxHeight: 800,
+    showCover: true,
+    usePortrait: true,
+    maxShadowOpacity: 0.5,
+    mobileScrollSupport: true,
+    swipeDistance: 20,
+    flippingTime: 700,
+    useMouseEvents: false,
+    showPageCorners: false
+  });
+
+  pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+  /* ---------------------------------------------------------
+     Controls
+  --------------------------------------------------------- */
+  var counterEl = document.getElementById('counter');
+  var btnPrev = document.getElementById('btnPrev');
+  var btnNext = document.getElementById('btnNext');
+  var hintEl = document.getElementById('hint');
+
+  function updateUI() {
+    var current = pageFlip.getCurrentPageIndex() + 1;
+    var total = pageFlip.getPageCount();
+    counterEl.textContent = current + ' / ' + total;
+    btnPrev.disabled = current <= 1;
+    btnNext.disabled = current >= total;
+  }
+
+  pageFlip.on('flip', updateUI);
+  pageFlip.on('init', updateUI);
+
+  btnPrev.addEventListener('click', function(){ pageFlip.flipPrev(); });
+  btnNext.addEventListener('click', function(){ pageFlip.flipNext(); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowLeft') pageFlip.flipPrev();
+    if (e.key === 'ArrowRight') pageFlip.flipNext();
+  });
+
+  var hintHidden = false;
+  function hideHint(){
+    if (hintHidden) return;
+    hintHidden = true;
+    hintEl.classList.add('--hidden');
+  }
+  pageFlip.on('flip', hideHint);
+  setTimeout(hideHint, 5000);
+
+  /* ---------------------------------------------------------
+     Responsive resize
+  --------------------------------------------------------- */
+  var resizeTimer;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      var s = computeSize();
+      pageFlip.update();
+    }, 150);
+  });
+
+})();
+</script>
+
+</body>
+</html>

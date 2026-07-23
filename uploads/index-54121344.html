@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="author" content="Best Web Studio Ltd">
+<!-- Author: Best Web Studio Ltd -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Preview Book</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --arrow-bg: rgba(20,24,30,0.38);
+    --arrow-bg-hover: rgba(20,24,30,0.58);
+    --ui-color: #ffffff;
+    --shadow: 0 30px 60px -20px rgba(15,20,30,0.35), 0 10px 25px -10px rgba(15,20,30,0.25);
+  }
+
+  html, body{
+    margin:0;
+    padding:0;
+    background: transparent !important;
+    height:100%;
+    overflow:hidden;
+  }
+
+  *{
+    box-sizing:border-box;
+    -webkit-user-drag:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    user-select:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+  }
+
+  #stage{
+    position:relative;
+    width:100%;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:transparent;
+    padding: 40px 70px;
+  }
+
+  #book{
+    filter: drop-shadow(0 25px 45px rgba(10,15,25,0.30));
+  }
+
+  .page{
+    background:#ffffff;
+    overflow:hidden;
+  }
+
+  .page-inner{
+    width:100%;
+    height:100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events:none;
+  }
+
+  .page.--left .page-shadow{
+    box-shadow: inset -10px 0 20px -15px rgba(0,0,0,0.35);
+  }
+  .page.--right .page-shadow{
+    box-shadow: inset 10px 0 20px -15px rgba(0,0,0,0.35);
+  }
+
+  /* Navigation arrows */
+  .nav-arrow{
+    position:absolute;
+    top:50%;
+    transform: translateY(-50%);
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background: var(--arrow-bg);
+    border: none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+    z-index:20;
+    opacity: 0.85;
+  }
+  .nav-arrow:hover{
+    background: var(--arrow-bg-hover);
+    opacity:1;
+  }
+  .nav-arrow:active{
+    transform: translateY(-50%) scale(0.92);
+  }
+  .nav-arrow svg{
+    width:18px;
+    height:18px;
+    fill:none;
+    stroke: var(--ui-color);
+    stroke-width:2.4;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .nav-arrow.--prev{ left:12px; }
+  .nav-arrow.--next{ right:12px; }
+  .nav-arrow[disabled]{
+    opacity:0.25;
+    cursor:default;
+    pointer-events:none;
+  }
+
+  /* Page counter */
+  #counter{
+    position:absolute;
+    left:50%;
+    bottom:16px;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: var(--arrow-bg);
+    color: var(--ui-color);
+    font-size:12px;
+    letter-spacing:0.04em;
+    font-variant-numeric: tabular-nums;
+    z-index:20;
+    user-select:none;
+    pointer-events:none;
+  }
+
+  /* Hint */
+  #hint{
+    position:absolute;
+    left:50%;
+    top:18px;
+    transform: translateX(-50%);
+    padding:6px 14px;
+    border-radius:999px;
+    background: var(--arrow-bg);
+    color: var(--ui-color);
+    font-size:11.5px;
+    letter-spacing:0.03em;
+    z-index:20;
+    opacity:0.9;
+    transition: opacity 0.6s ease;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  #hint.--hidden{ opacity:0; }
+
+  @media (max-width: 640px){
+    #stage{ padding: 16px 44px; }
+    .nav-arrow{ width:38px; height:38px; }
+    .nav-arrow.--prev{ left:4px; }
+    .nav-arrow.--next{ right:4px; }
+    #hint{ font-size:10.5px; padding:5px 11px; top:10px;}
+    #counter{ font-size:11px; bottom:10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <button class="nav-arrow --prev" id="btnPrev" aria-label="Previous page">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+
+  <div id="book"></div>
+
+  <button class="nav-arrow --next" id="btnNext" aria-label="Next page">
+    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
+
+  <div id="hint">Click the edges or swipe to turn the page</div>
+  <div id="counter">1 / 28</div>
+</div>
+
+<script src="page-flip.browser.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------------------------------------------------
+     Basic copy-protection deterrents.
+     Note: no client-side measure can make images fully
+     un-copyable (screenshots always work) — this only raises
+     the bar for casual right-click / drag / devtools saving.
+  --------------------------------------------------------- */
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); }, false);
+  document.addEventListener('dragstart', function(e){ e.preventDefault(); }, false);
+  document.addEventListener('selectstart', function(e){ e.preventDefault(); }, false);
+  document.addEventListener('keydown', function(e){
+    var k = e.key ? e.key.toLowerCase() : '';
+    if (k === 'f12') { e.preventDefault(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'i' || k === 'j' || k === 'c')) { e.preventDefault(); return; }
+    if ((e.ctrlKey || e.metaKey) && (k === 'u' || k === 's')) { e.preventDefault(); return; }
+  }, false);
+
+  /* ---------------------------------------------------------
+     Build page list.
+     Pages 1 and 30 (front / back cover) are marked hard.
+  --------------------------------------------------------- */
+  var TOTAL_PAGES = 28;
+  var bookEl = document.getElementById('book');
+
+  for (var i = 1; i <= TOTAL_PAGES; i++) {
+    var num = ('0' + i).slice(-2);
+    var isCover = (i === 1 || i === TOTAL_PAGES);
+
+    var pageDiv = document.createElement('div');
+    pageDiv.className = 'page';
+    if (isCover) pageDiv.setAttribute('data-density', 'hard');
+
+    var inner = document.createElement('div');
+    inner.className = 'page-inner';
+    inner.style.backgroundImage = "url('pages/page-" + num + ".jpg')";
+
+    pageDiv.appendChild(inner);
+    bookEl.appendChild(pageDiv);
+  }
+
+  /* ---------------------------------------------------------
+     Sizing: page images are 986 x 1400 px (ratio ~0.7043)
+  --------------------------------------------------------- */
+  function computeSize() {
+    var padX = window.innerWidth <= 640 ? 88 : 200;
+    var padY = window.innerWidth <= 640 ? 60 : 120;
+    var availW = window.innerWidth - padX;
+    var availH = window.innerHeight - padY;
+
+    var ratio = 986 / 1400;
+    var singleW = Math.min(availW / 2, availH * ratio);
+    var singleH = singleW / ratio;
+
+    singleW = Math.max(180, Math.min(singleW, 560));
+    singleH = singleW / ratio;
+
+    return { w: Math.round(singleW), h: Math.round(singleH) };
+  }
+
+  var size = computeSize();
+
+  var pageFlip = new St.PageFlip(bookEl, {
+    width: size.w,
+    height: size.h,
+    size: 'stretch',
+    minWidth: 180,
+    maxWidth: 560,
+    minHeight: 250,
+    maxHeight: 800,
+    showCover: true,
+    usePortrait: true,
+    maxShadowOpacity: 0.5,
+    mobileScrollSupport: true,
+    swipeDistance: 20,
+    flippingTime: 700,
+    useMouseEvents: true
+  });
+
+  pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+  /* ---------------------------------------------------------
+     Controls
+  --------------------------------------------------------- */
+  var counterEl = document.getElementById('counter');
+  var btnPrev = document.getElementById('btnPrev');
+  var btnNext = document.getElementById('btnNext');
+  var hintEl = document.getElementById('hint');
+
+  function updateUI() {
+    var current = pageFlip.getCurrentPageIndex() + 1;
+    var total = pageFlip.getPageCount();
+    counterEl.textContent = current + ' / ' + total;
+    btnPrev.disabled = current <= 1;
+    btnNext.disabled = current >= total;
+  }
+
+  pageFlip.on('flip', updateUI);
+  pageFlip.on('init', updateUI);
+
+  btnPrev.addEventListener('click', function(){ pageFlip.flipPrev(); });
+  btnNext.addEventListener('click', function(){ pageFlip.flipNext(); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowLeft') pageFlip.flipPrev();
+    if (e.key === 'ArrowRight') pageFlip.flipNext();
+  });
+
+  var hintHidden = false;
+  function hideHint(){
+    if (hintHidden) return;
+    hintHidden = true;
+    hintEl.classList.add('--hidden');
+  }
+  pageFlip.on('flip', hideHint);
+  setTimeout(hideHint, 5000);
+
+  /* ---------------------------------------------------------
+     Responsive resize
+  --------------------------------------------------------- */
+  var resizeTimer;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      var s = computeSize();
+      pageFlip.update();
+    }, 150);
+  });
+
+})();
+</script>
+
+</body>
+</html>

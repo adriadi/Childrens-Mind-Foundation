@@ -1,0 +1,39 @@
+/* ============================================
+   CMF — SPACING, RADIUS, SHADOW, MOTION TOKENS
+   ============================================ */
+:root{
+  /* --- Spacing scale (as used in source CSS) --- */
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --space-10: 56px;
+  --space-11: 64px;
+  --space-12: 96px;   /* section vertical padding */
+
+  /* --- Radii --- */
+  --r-sm: 10px;   /* inputs */
+  --r-md: 18px;   /* stat cards */
+  --r-lg: 28px;   /* pillar/program/action cards, art panels */
+  --r-pill: 99px; /* buttons, eyebrow pills, hashtag ribbon corners are square-ish (8px), see below */
+  --r-ribbon: 8px; /* hashtag ribbon uses a small squared radius, not a pill */
+
+  /* --- Shadow --- */
+  --shadow-card: 0 8px 24px -8px rgba(22, 50, 74, 0.14);
+  --shadow-soft: 0 12px 30px -10px rgba(22, 50, 74, 0.18);
+  --shadow-btn-primary: 0 10px 22px -8px rgba(233, 113, 50, 0.55);
+
+  /* --- Motion --- */
+  --ease-standard: ease; /* @kind other */
+  --duration-fast: 0.15s; /* @kind other */
+  --duration-base: 0.2s; /* @kind other */
+  --duration-reveal: 0.6s; /* @kind other */
+  --duration-float: 6s; /* @kind other */
+  --duration-pulse: 4s; /* @kind other */
+  --duration-twinkle: 4s; /* @kind other */
+}
